@@ -1,0 +1,41 @@
+$kind: http-request
+description: Task 5 (INTENTIONAL FAILING TEST CASES) — Demonstrates Chai assertions that fail on purpose. 2 tests pass, 2 tests intentionally fail to show that the testing framework is working correctly.
+url: "{{baseUrl}}/objects"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 6: Pre-request — intentional demo of a failing test scenario
+      console.log('Pre-request: This request intentionally has a FAILING assertion.');
+      console.log('Pre-request: We expect status 201 but the API returns 200 — the test will FAIL.');
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      // Task 5: INTENTIONAL FAILING TEST CASE
+      // This test is EXPECTED TO FAIL — it demonstrates a failing assertion.
+      // The API returns 200 but we are asserting 201 on purpose.
+
+      pm.test('[INTENTIONAL FAIL] Status code should be 201 — but it is actually 200', function () {
+          // This WILL FAIL because GET /objects returns 200, not 201
+          pm.response.to.have.status(201);
+      });
+
+      // These tests should still pass
+      pm.test('[PASS] Status code is 200 (correct assertion)', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('[INTENTIONAL FAIL] Response body should be a string — but it is an array', function () {
+          // This WILL FAIL because the body is an array
+          const json = pm.response.json();
+          pm.expect(json).to.be.a('string');
+      });
+
+      pm.test('[PASS] Response body is an array (correct assertion)', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.be.an('array');
+      });
+
+      console.log('Tests section: 2 tests pass, 2 tests intentionally fail — this is expected behaviour.');
+    language: text/javascript
+order: 6000

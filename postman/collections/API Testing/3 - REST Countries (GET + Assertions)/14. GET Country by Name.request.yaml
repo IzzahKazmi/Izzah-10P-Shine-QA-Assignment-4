@@ -1,0 +1,59 @@
+$kind: http-request
+description: Task 4 (deep JSON parsing + logging) + Task 5 (Chai assertions) + Task 6 (random country in pre-request)
+url: "{{countriesBaseUrl}}/name/{{searchCountry}}"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 6: Pre-request — pick a random country to search
+      const countries = ['Pakistan', 'Germany', 'Japan', 'Brazil', 'Canada', 'Australia', 'Egypt'];
+      const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+      pm.collectionVariables.set('searchCountry', randomCountry);
+      console.log('Pre-request: Searching for country:', randomCountry);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      // Task 5: Chai assertions
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('Response is an array', function () {
+          pm.expect(pm.response.json()).to.be.an('array');
+      });
+
+      pm.test('At least one country result returned', function () {
+          pm.expect(pm.response.json().length).to.be.greaterThan(0);
+      });
+
+      pm.test('Country has name, capital, population, region fields', function () {
+          const country = pm.response.json()[0];
+          pm.expect(country).to.have.property('name');
+          pm.expect(country).to.have.property('capital');
+          pm.expect(country).to.have.property('population');
+          pm.expect(country).to.have.property('region');
+      });
+
+      pm.test('Population is a positive number', function () {
+          const country = pm.response.json()[0];
+          pm.expect(country.population).to.be.a('number');
+          pm.expect(country.population).to.be.greaterThan(0);
+      });
+
+      // Task 4: Deep JSON parsing and logging
+      const country = pm.response.json()[0];
+      console.log('--- Task 4: Country Data ---');
+      console.log('Official Name:', country.name.official);
+      console.log('Common Name:', country.name.common);
+      console.log('Capital:', country.capital ? country.capital[0] : 'N/A');
+      console.log('Region:', country.region);
+      console.log('Subregion:', country.subregion);
+      console.log('Population:', country.population.toLocaleString());
+      console.log('Area (km²):', country.area);
+      const currencies = Object.values(country.currencies || {});
+      if (currencies.length > 0) console.log('Currency:', currencies[0].name, '(' + currencies[0].symbol + ')');
+      const langs = Object.values(country.languages || {});
+      console.log('Languages:', langs.join(', '));
+      console.log('Timezones:', (country.timezones || []).join(', '));
+    language: text/javascript
+order: 1000

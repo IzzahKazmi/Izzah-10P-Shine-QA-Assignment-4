@@ -1,0 +1,44 @@
+$kind: http-request
+description: Task 4 (aggregate JSON parsing) + Task 5 (Chai assertions) + Task 6 (random region in pre-request)
+url: "{{countriesBaseUrl}}/region/{{searchRegion}}"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 6: Pre-request — pick a random region
+      const regions = ['Asia', 'Europe', 'Africa', 'Americas', 'Oceania'];
+      const randomRegion = regions[Math.floor(Math.random() * regions.length)];
+      pm.collectionVariables.set('searchRegion', randomRegion);
+      console.log('Pre-request: Searching region:', randomRegion);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('Response is a non-empty array', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.be.an('array');
+          pm.expect(json.length).to.be.greaterThan(0);
+      });
+
+      pm.test('All returned countries belong to the searched region', function () {
+          const json = pm.response.json();
+          const searchedRegion = pm.collectionVariables.get('searchRegion');
+          json.forEach(function(country) {
+              pm.expect(country.region).to.equal(searchedRegion);
+          });
+      });
+
+      // Task 4: Log summary
+      const countries = pm.response.json();
+      console.log('--- Task 4: Region Summary ---');
+      console.log('Region:', pm.collectionVariables.get('searchRegion'));
+      console.log('Total countries in region:', countries.length);
+      const totalPop = countries.reduce((sum, c) => sum + (c.population || 0), 0);
+      console.log('Combined population:', totalPop.toLocaleString());
+      const largest = countries.reduce((prev, curr) => (prev.area > curr.area ? prev : curr));
+      console.log('Largest country by area:', largest.name.common, '—', largest.area, 'km²');
+    language: text/javascript
+order: 2000

@@ -1,0 +1,52 @@
+$kind: http-request
+description: Task 1 (GET) + Task 2 (baseUrl variable) + Task 7 (chained using firstObjectId from previous request)
+url: "{{baseUrl}}/objects/{{firstObjectId}}"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 6: Pre-request — verify the variable we need exists
+      const firstId = pm.collectionVariables.get('firstObjectId');
+      if (!firstId) {
+          console.warn('Pre-request WARNING: firstObjectId is not set. Run GET All Objects first!');
+      } else {
+          console.log('Pre-request: Using firstObjectId =', firstId);
+      }
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      // Task 5: Chai assertions for GET Single Object
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('Response is a single object (not array)', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.be.an('object');
+          pm.expect(json).to.not.be.an('array');
+      });
+
+      pm.test('Object has required fields: id, name', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('id');
+          pm.expect(json).to.have.property('name');
+      });
+
+      pm.test('Object id matches requested id', function () {
+          const json = pm.response.json();
+          const requestedId = pm.collectionVariables.get('firstObjectId');
+          pm.expect(String(json.id)).to.equal(String(requestedId));
+      });
+
+      // Task 4: Parse and log
+      const obj = pm.response.json();
+      console.log('--- Task 4: Single Object Details ---');
+      console.log('ID:', obj.id);
+      console.log('Name:', obj.name);
+      if (obj.data) {
+          console.log('Data fields:', JSON.stringify(obj.data));
+      } else {
+          console.log('Data: null (no extra data for this object)');
+      }
+    language: text/javascript
+order: 2000

@@ -1,0 +1,3 @@
+$kind: collection
+description: "Task 7 — Full API chaining: Register → Get Token → Browse Books → Place Order → Get Order → Delete Order"
+order: 2000

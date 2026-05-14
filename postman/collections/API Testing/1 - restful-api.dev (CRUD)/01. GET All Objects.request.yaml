@@ -1,0 +1,75 @@
+$kind: http-request
+description: Task 1 (GET) + Task 2 (baseUrl variable) + Task 3 (random data generated in pre-request) + Task 4 (log parsed response) + Task 5 (Chai assertions) + Task 6 (variable handling in pre-request and tests)
+url: "{{baseUrl}}/objects"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 6: Pre-request script — set a timestamp variable before the request
+      pm.variables.set('requestTimestamp', new Date().toISOString());
+      console.log('Pre-request: Timestamp set to', pm.variables.get('requestTimestamp'));
+
+      // Task 3: Generate random data and store in collection variables for later use
+      const brands = ['Apple', 'Samsung', 'Sony', 'Google', 'Microsoft', 'OnePlus', 'Xiaomi'];
+      const models = ['Pro Max', 'Ultra', 'Edge', 'Lite', 'Plus', 'Standard', 'Mini'];
+      const randomBrand = brands[Math.floor(Math.random() * brands.length)];
+      const randomModel = models[Math.floor(Math.random() * models.length)];
+      const randomName = randomBrand + ' ' + randomModel + ' ' + Math.floor(Math.random() * 9000 + 1000);
+      const randomYear = Math.floor(Math.random() * (2024 - 2019 + 1)) + 2019;
+      const randomPrice = parseFloat((Math.random() * (1999 - 299) + 299).toFixed(2));
+      const randomCapacity = ['64GB', '128GB', '256GB', '512GB', '1TB'][Math.floor(Math.random() * 5)];
+
+      pm.collectionVariables.set('randomName', randomName);
+      pm.collectionVariables.set('randomYear', randomYear);
+      pm.collectionVariables.set('randomPrice', randomPrice);
+      pm.collectionVariables.set('randomCapacity', randomCapacity);
+
+      console.log('Pre-request: Random product generated —', randomName, '| Year:', randomYear, '| Price: $' + randomPrice);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      // Task 5: Chai assertions for GET All Objects
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('Response time is less than 3000ms', function () {
+          pm.expect(pm.response.responseTime).to.be.below(3000);
+      });
+
+      pm.test('Content-Type is application/json', function () {
+          pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');
+      });
+
+      pm.test('Response body is an array', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.be.an('array');
+      });
+
+      pm.test('Array is not empty', function () {
+          const json = pm.response.json();
+          pm.expect(json.length).to.be.greaterThan(0);
+      });
+
+      pm.test('Each object has id and name', function () {
+          const json = pm.response.json();
+          json.forEach(function(obj) {
+              pm.expect(obj).to.have.property('id');
+              pm.expect(obj).to.have.property('name');
+          });
+      });
+
+      // Task 4: Parse JSON response and log values
+      const responseBody = pm.response.json();
+      console.log('--- Task 4: Parsed JSON Response ---');
+      console.log('Total objects returned:', responseBody.length);
+      console.log('First object ID:', responseBody[0].id);
+      console.log('First object Name:', responseBody[0].name);
+      console.log('Last object ID:', responseBody[responseBody.length - 1].id);
+      console.log('Last object Name:', responseBody[responseBody.length - 1].name);
+
+      // Task 6: Tests section — store first object ID for later use
+      pm.collectionVariables.set('firstObjectId', responseBody[0].id);
+      console.log('Tests section: First Object ID saved to collectionVariable:', responseBody[0].id);
+    language: text/javascript
+order: 1000

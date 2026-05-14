@@ -1,0 +1,3 @@
+$kind: collection
+description: Bonus folder — Demonstrates GET with deep JSON parsing, logging, and Chai assertions on a real public API
+order: 3000

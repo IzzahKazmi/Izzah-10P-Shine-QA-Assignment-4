@@ -1,0 +1,77 @@
+$kind: http-request
+description: Task 1 (PUT) + Task 2 (baseUrl variable) + Task 3 (random PUT body) + Task 4 (log) + Task 5 (Chai assertions) + Task 6 (pre-request data gen) + Task 7 (chained using createdObjectId)
+url: "{{baseUrl}}/objects/{{createdObjectId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+       "name": "{{updatedName}}",
+       "data": {
+          "year": {{updatedYear}},
+          "price": {{updatedPrice}},
+          "CPU model": "Updated Gen Processor",
+          "Hard disk size": "1TB"
+       }
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 6: Pre-request — confirm chain variable exists
+      const id = pm.collectionVariables.get('createdObjectId');
+      if (!id) {
+          console.warn('Pre-request WARNING: createdObjectId not set! Run POST first.');
+      } else {
+          console.log('Pre-request: PUT will update object with ID =', id);
+      }
+
+      // Task 3: Generate new random data for the PUT body
+      const updatedName = 'Updated Device ' + pm.variables.replaceIn('{{$randomAdjective}}') + ' ' + Math.floor(Math.random() * 999);
+      const updatedPrice = parseFloat((Math.random() * 2500 + 500).toFixed(2));
+      const updatedYear = 2025;
+
+      pm.collectionVariables.set('updatedName', updatedName);
+      pm.collectionVariables.set('updatedPrice', updatedPrice);
+      pm.collectionVariables.set('updatedYear', updatedYear);
+
+      console.log('Pre-request: PUT body data:', updatedName, '| $' + updatedPrice, '| Year:', updatedYear);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      // Task 5: Chai assertions for PUT
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('Response id matches createdObjectId', function () {
+          const json = pm.response.json();
+          const expectedId = pm.collectionVariables.get('createdObjectId');
+          pm.expect(String(json.id)).to.equal(String(expectedId));
+      });
+
+      pm.test('Response name matches updated name', function () {
+          const json = pm.response.json();
+          const expectedName = pm.collectionVariables.get('updatedName');
+          pm.expect(json.name).to.equal(expectedName);
+      });
+
+      pm.test('Response has updatedAt field', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('updatedAt');
+      });
+
+      pm.test('Year in data is 2025', function () {
+          const json = pm.response.json();
+          pm.expect(json.data.year).to.equal(2025);
+      });
+
+      // Task 4: Log
+      const updated = pm.response.json();
+      console.log('--- Task 4: PUT Response ---');
+      console.log('Updated Object ID:', updated.id);
+      console.log('Updated Name:', updated.name);
+      console.log('Updated At:', updated.updatedAt);
+    language: text/javascript
+order: 4000

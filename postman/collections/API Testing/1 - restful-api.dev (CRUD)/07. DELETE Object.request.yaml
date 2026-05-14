@@ -1,0 +1,44 @@
+$kind: http-request
+description: Task 1 (DELETE) + Task 2 (baseUrl variable) + Task 4 (log confirmation) + Task 5 (Chai assertions) + Task 6 (pre-request validation + cleanup) + Task 7 (chained using createdObjectId)
+url: "{{baseUrl}}/objects/{{createdObjectId}}"
+method: DELETE
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 6: Pre-request — verify the chain variable exists
+      const id = pm.collectionVariables.get('createdObjectId');
+      if (!id) {
+          console.warn('Pre-request WARNING: createdObjectId not set. Run POST first!');
+      } else {
+          console.log('Pre-request: About to DELETE object with ID =', id);
+      }
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      // Task 5: Chai assertions for DELETE
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('Response body confirms deletion', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('message');
+          pm.expect(json.message).to.include(pm.collectionVariables.get('createdObjectId'));
+      });
+
+      pm.test('Response is a valid JSON object', function () {
+          pm.expect(pm.response.json()).to.be.an('object');
+      });
+
+      // Task 4: Parse and log
+      const result = pm.response.json();
+      console.log('--- Task 4: DELETE Response ---');
+      console.log('Message:', result.message);
+
+      // Task 6: Clean up the variable after deletion
+      const deletedId = pm.collectionVariables.get('createdObjectId');
+      pm.collectionVariables.set('deletedObjectId', deletedId);
+      pm.collectionVariables.set('createdObjectId', '');
+      console.log('Tests section: Cleared createdObjectId. Deleted ID was:', deletedId);
+    language: text/javascript
+order: 7000

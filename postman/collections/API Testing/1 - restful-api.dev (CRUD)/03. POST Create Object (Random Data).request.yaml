@@ -1,0 +1,94 @@
+$kind: http-request
+description: Task 1 (POST) + Task 2 (baseUrl variable) + Task 3 (random body data from collection variables) + Task 4 (log response) + Task 5 (Chai assertions) + Task 6 (pre-request random gen + tests variable saving) + Task 7 (saves createdObjectId for chaining)
+url: "{{baseUrl}}/objects"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+       "name": "{{randomName}}",
+       "data": {
+          "year": {{randomYear}},
+          "price": {{randomPrice}},
+          "CPU model": "Latest Gen Processor",
+          "Hard disk size": "{{randomCapacity}}",
+          "color": "{{randomColor}}"
+       }
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 3 + Task 6: Pre-request — generate random body data
+      // (Variables were already set in GET All Objects pre-request,
+      //  but we regenerate here in case this request runs standalone)
+
+      const brands = ['Apple', 'Samsung', 'Sony', 'Google', 'Microsoft', 'OnePlus', 'Xiaomi'];
+      const models = ['Pro Max', 'Ultra', 'Edge', 'Lite', 'Plus', 'Standard', 'Mini'];
+      const randomBrand = brands[Math.floor(Math.random() * brands.length)];
+      const randomModel = models[Math.floor(Math.random() * models.length)];
+      const randomName = randomBrand + ' ' + randomModel + ' ' + Math.floor(Math.random() * 9000 + 1000);
+      const randomYear = Math.floor(Math.random() * (2024 - 2019 + 1)) + 2019;
+      const randomPrice = parseFloat((Math.random() * (1999 - 299) + 299).toFixed(2));
+      const randomCapacity = ['64GB', '128GB', '256GB', '512GB', '1TB'][Math.floor(Math.random() * 5)];
+      const randomColor = ['Space Gray', 'Silver', 'Gold', 'Midnight Black', 'Starlight', 'Blue', 'Red'][Math.floor(Math.random() * 7)];
+
+      pm.collectionVariables.set('randomName', randomName);
+      pm.collectionVariables.set('randomYear', randomYear);
+      pm.collectionVariables.set('randomPrice', randomPrice);
+      pm.collectionVariables.set('randomCapacity', randomCapacity);
+      pm.collectionVariables.set('randomColor', randomColor);
+
+      console.log('Pre-request: Random data ready for POST body:');
+      console.log('  Name:', randomName);
+      console.log('  Year:', randomYear);
+      console.log('  Price: $' + randomPrice);
+      console.log('  Capacity:', randomCapacity);
+      console.log('  Color:', randomColor);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      // Task 5: Chai assertions for POST
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('Response has id (object was created)', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('id');
+          pm.expect(json.id).to.not.be.null;
+          pm.expect(json.id).to.not.equal('');
+      });
+
+      pm.test('Response name matches what we sent', function () {
+          const json = pm.response.json();
+          const sentName = pm.collectionVariables.get('randomName');
+          pm.expect(json.name).to.equal(sentName);
+      });
+
+      pm.test('Response has createdAt timestamp', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('createdAt');
+          pm.expect(json.createdAt).to.not.be.undefined;
+      });
+
+      pm.test('Price in response matches sent price', function () {
+          const json = pm.response.json();
+          const sentPrice = parseFloat(pm.collectionVariables.get('randomPrice'));
+          pm.expect(json.data.price).to.equal(sentPrice);
+      });
+
+      // Task 4: Parse and log response
+      const created = pm.response.json();
+      console.log('--- Task 4: Created Object ---');
+      console.log('New Object ID:', created.id);
+      console.log('Name:', created.name);
+      console.log('Created At:', created.createdAt);
+      console.log('Data:', JSON.stringify(created.data));
+
+      // Task 6 + Task 7: Save created ID into variable for chaining
+      pm.collectionVariables.set('createdObjectId', created.id);
+      console.log('Tests section: createdObjectId saved for chaining =', created.id);
+    language: text/javascript
+order: 3000

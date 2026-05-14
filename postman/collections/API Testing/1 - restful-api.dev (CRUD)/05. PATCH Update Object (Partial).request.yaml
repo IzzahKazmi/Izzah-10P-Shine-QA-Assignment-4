@@ -1,0 +1,63 @@
+$kind: http-request
+description: Task 1 (PATCH) + Task 2 (baseUrl variable) + Task 3 (random patched price) + Task 4 (log) + Task 5 (Chai assertions) + Task 6 (pre-request variable gen) + Task 7 (chained using createdObjectId)
+url: "{{baseUrl}}/objects/{{createdObjectId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+       "data": {
+          "price": {{patchedPrice}}
+       }
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 6: Pre-request — log chain variable
+      const id = pm.collectionVariables.get('createdObjectId');
+      console.log('Pre-request: PATCH will partially update object ID =', id);
+
+      // Task 3: Generate a random new price only (partial update)
+      const patchedPrice = parseFloat((Math.random() * 3000 + 100).toFixed(2));
+      pm.collectionVariables.set('patchedPrice', patchedPrice);
+      console.log('Pre-request: New patched price will be $' + patchedPrice);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      // Task 5: Chai assertions for PATCH
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('Response is an object', function () {
+          pm.expect(pm.response.json()).to.be.an('object');
+      });
+
+      pm.test('Response id matches createdObjectId', function () {
+          const json = pm.response.json();
+          const expectedId = pm.collectionVariables.get('createdObjectId');
+          pm.expect(String(json.id)).to.equal(String(expectedId));
+      });
+
+      pm.test('Patched price matches what we sent', function () {
+          const json = pm.response.json();
+          const expectedPrice = parseFloat(pm.collectionVariables.get('patchedPrice'));
+          pm.expect(json.data.price).to.equal(expectedPrice);
+      });
+
+      pm.test('Response has updatedAt field', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('updatedAt');
+      });
+
+      // Task 4: Log parsed response
+      const patched = pm.response.json();
+      console.log('--- Task 4: PATCH Response ---');
+      console.log('Object ID:', patched.id);
+      console.log('Name (unchanged):', patched.name);
+      console.log('New Price:', patched.data ? patched.data.price : 'N/A');
+      console.log('Updated At:', patched.updatedAt);
+    language: text/javascript
+order: 5000

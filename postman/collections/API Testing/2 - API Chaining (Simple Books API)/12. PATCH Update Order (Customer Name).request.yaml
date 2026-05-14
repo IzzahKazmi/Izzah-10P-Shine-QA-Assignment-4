@@ -1,0 +1,38 @@
+$kind: http-request
+name: 12. PATCH Update Order (Customer Name)
+description: Task 7 (API Chaining Step 5) — Update order using chained orderId and accessToken
+url: "{{booksBaseUrl}}/orders/{{orderId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+body:
+  type: json
+  content: |-
+    {
+       "customerName": "{{updatedCustomerName}}"
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.request.headers.upsert({
+          key: 'Authorization', 
+          value: 'Bearer ' + pm.globals.get('accessToken')
+      });
+      pm.collectionVariables.set('orderId', pm.globals.get('orderId'));
+
+      // Task 3 + Task 6: Generate new customer name for PATCH
+      const updatedNames = ['Updated Alice', 'Updated Bob', 'Updated Carol', 'John Doe Updated', 'Jane Doe Updated'];
+      const newCustomerName = updatedNames[Math.floor(Math.random() * updatedNames.length)];
+      pm.collectionVariables.set('updatedCustomerName', newCustomerName);
+      console.log('Pre-request: PATCH order', pm.collectionVariables.get('orderId'), 'with new name:', newCustomerName);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 204 (no content — update successful)', function () {
+          pm.response.to.have.status(204);
+      });
+
+      console.log('Tests section: PATCH successful. Order', pm.collectionVariables.get('orderId'), 'updated with name:', pm.collectionVariables.get('updatedCustomerName'));
+    language: text/javascript
+order: 5000

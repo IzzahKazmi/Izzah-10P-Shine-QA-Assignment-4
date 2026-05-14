@@ -1,0 +1,38 @@
+$kind: collection
+name: API Testing - Complete Collection
+description: |-
+  Complete API Testing collection covering all 7 tasks:
+  1. All HTTP methods (GET, POST, PUT, PATCH, DELETE)
+  2. Base URL as variable
+  3. Random request body data
+  4. Parse JSON response and log values
+  5. Chai assertions (including a failing test case)
+  6. Pre-request and Tests sections for variable handling
+  7. API chaining using response variables
+
+  APIs used: restful-api.dev, simple-books-api.glitch.me, restcountries.com
+variables:
+  baseUrl: https://api.restful-api.dev
+  booksBaseUrl: https://simple-books-api.glitch.me
+  countriesBaseUrl: https://restcountries.com/v3.1
+  createdObjectId: ""
+  accessToken: ""
+  orderId: ""
+  randomName: ""
+  randomYear: ""
+  randomPrice: ""
+  randomCapacity: ""
+  firstObjectId: ""
+  randomColor: ""
+  updatedName: ""
+  updatedPrice: ""
+  updatedYear: ""
+  patchedPrice: ""
+  deletedObjectId: ""
+  clientEmail: ""
+  clientName: ""
+  bookId: ""
+  customerName: ""
+  updatedCustomerName: ""
+  searchCountry: ""
+  searchRegion: ""

@@ -1,0 +1,46 @@
+$kind: http-request
+name: 08. POST Register Client (Get Token)
+description: Task 7 (API Chaining Step 1) — Register a client and save accessToken for all chained requests
+url: "{{booksBaseUrl}}/api-clients/"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+       "clientName": "{{clientName}}",
+       "clientEmail": "{{clientEmail}}"
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 3 + Task 6: Generate random email for registration
+      const randomSuffix = Math.floor(Math.random() * 100000);
+      const randomEmail = 'testuser' + randomSuffix + '@postmantest.com';
+      const randomClientName = 'PostmanTester' + randomSuffix;
+
+      pm.collectionVariables.set('clientEmail', randomEmail);
+      pm.collectionVariables.set('clientName', randomClientName);
+
+      console.log('Pre-request: Registering with email:', randomEmail);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 201 (client created)', function () {
+          pm.response.to.have.status(201);
+      });
+
+      pm.test('Response has accessToken', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('accessToken');
+          pm.expect(json.accessToken).to.be.a('string');
+      });
+
+      // Task 7: Chain — save token for all subsequent requests
+      const token = pm.response.json().accessToken;
+      pm.collectionVariables.set('accessToken', token);
+      pm.globals.set('accessToken', token);
+      console.log('Tests section: accessToken saved for chaining. Token starts with:', token.substring(0, 20) + '...');
+    language: text/javascript
+order: 1000

@@ -1,0 +1,49 @@
+$kind: http-request
+name: 09. GET List of Books
+description: Task 7 (API Chaining Step 2) — Get books list, save first available bookId for ordering
+url: "{{booksBaseUrl}}/books"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Task 6: Pre-request — log auth token status
+      const token = pm.collectionVariables.get('accessToken');
+      console.log('Pre-request: Access token present?', token ? 'YES' : 'NO — run Register Client first!');
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test('Response is an array of books', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.be.an('array');
+      });
+
+      pm.test('Each book has id, name, type, available fields', function () {
+          const books = pm.response.json();
+          books.forEach(function(book) {
+              pm.expect(book).to.have.property('id');
+              pm.expect(book).to.have.property('name');
+              pm.expect(book).to.have.property('type');
+              pm.expect(book).to.have.property('available');
+          });
+      });
+
+      // Task 4: Parse and log
+      const books = pm.response.json();
+      console.log('--- Task 4: Books List ---');
+      books.forEach(b => console.log('  ID:', b.id, '| Name:', b.name, '| Available:', b.available));
+
+      // Task 7: Chain — find an available book and save its ID
+      const availableBook = books.find(b => b.available === true);
+      if (availableBook) {
+          pm.collectionVariables.set('bookId', availableBook.id);
+          pm.globals.set('bookId', availableBook.id);
+          console.log('Tests section: Saved available bookId =', availableBook.id, '(', availableBook.name, ')');
+      } else {
+          console.warn('Tests section: No available books found!');
+      }
+    language: text/javascript
+order: 2000

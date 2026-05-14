@@ -1,0 +1,33 @@
+$kind: http-request
+name: "13. DELETE Order (Chained: orderId)"
+description: Task 7 (API Chaining Step 6) — Delete the order using chained orderId and accessToken
+url: "{{booksBaseUrl}}/orders/{{orderId}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{accessToken}}
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.request.headers.upsert({
+          key: 'Authorization', 
+          value: 'Bearer ' + pm.globals.get('accessToken')
+      });
+      pm.collectionVariables.set('orderId', pm.globals.get('orderId'));
+
+      // Task 6: Pre-request — confirm orderId for deletion
+      const orderId = pm.collectionVariables.get('orderId');
+      console.log('Pre-request: Deleting order with ID =', orderId);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 204 (no content — deleted)', function () {
+          pm.response.to.have.status(204);
+      });
+
+      // Task 6: Cleanup chained variables
+      const deletedOrderId = pm.collectionVariables.get('orderId');
+      pm.collectionVariables.set('orderId', '');
+      console.log('Tests section: Successfully deleted orderId =', deletedOrderId);
+      console.log('Tests section: Chain complete — orderId variable cleared.');
+    language: text/javascript
+order: 6000

@@ -1,0 +1,62 @@
+$kind: http-request
+name: "10. POST Place Order (Chained: bookId + token)"
+description: Task 7 (API Chaining Step 3) — Place order using bookId and accessToken from previous requests. Saves orderId for chaining.
+url: "{{booksBaseUrl}}/orders"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+body:
+  type: json
+  content: |-
+    {
+       "bookId": {{bookId}},
+       "customerName": "{{customerName}}"
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.request.headers.upsert({
+          key: 'Authorization', 
+          value: 'Bearer ' + pm.globals.get('accessToken')
+      });
+      pm.collectionVariables.set('orderId', pm.globals.get('orderId'));
+      pm.collectionVariables.set('bookId', pm.globals.get('bookId'));
+
+      // Task 6: Pre-request — verify chained variables
+      const bookId = pm.collectionVariables.get('bookId');
+      if (!bookId || bookId === 'undefined') {
+          pm.collectionVariables.set('bookId', pm.globals.get('bookId'));
+      }
+      const token = pm.collectionVariables.get('accessToken');
+      console.log('Pre-request: Ordering bookId =', bookId, 'with token:', token ? 'present' : 'MISSING');
+
+      // Task 3: Random customer name
+      const names = ['Alice Smith', 'Bob Johnson', 'Carol White', 'David Brown', 'Emma Jones'];
+      const randomCustomer = names[Math.floor(Math.random() * names.length)];
+      pm.collectionVariables.set('customerName', randomCustomer);
+      console.log('Pre-request: Customer name:', randomCustomer);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 201 (order created)', function () {
+          pm.response.to.have.status(201);
+      });
+
+      pm.test('Response has orderId', function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('orderId');
+      });
+
+      pm.test('Order was created successfully', function () {
+          const json = pm.response.json();
+          pm.expect(json.created).to.be.true;
+      });
+
+      // Task 7: Chain — save orderId
+      const orderId = pm.response.json().orderId;
+      pm.collectionVariables.set('orderId', orderId);
+      pm.globals.set('orderId', orderId);
+      console.log('Tests section: orderId saved for chaining =', orderId);
+    language: text/javascript
+order: 3000
