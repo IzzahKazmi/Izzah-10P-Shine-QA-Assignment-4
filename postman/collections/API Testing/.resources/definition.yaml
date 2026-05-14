@@ -13,7 +13,7 @@ description: |-
   APIs used: restful-api.dev, simple-books-api.glitch.me, restcountries.com
 variables:
   baseUrl: https://api.restful-api.dev
-  booksBaseUrl: https://simple-books-api.glitch.me
+  booksBaseUrl: https://simple-books-api.click
   countriesBaseUrl: https://restcountries.com/v3.1
   createdObjectId: ""
   accessToken: ""

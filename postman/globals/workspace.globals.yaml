@@ -1,11 +1,5 @@
 name: Globals
 values:
-  - key: baseUrl
-    value: 'https://api.restful-api.dev'
-    enabled: true
-  - key: booksBaseUrl
-    value: 'https://simple-books-api.glitch.me'
-    enabled: true
   - key: accessToken
     value: ''
     enabled: true
